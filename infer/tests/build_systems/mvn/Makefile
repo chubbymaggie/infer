@@ -7,7 +7,7 @@
 
 TESTS_DIR = ../..
 
-ANALYZER = infer
+ANALYZER = checkers
 INFERPRINT_OPTIONS = --issues-tests
 
 MVN_DIRS = app_with_submodules  simple_app  app_with_infer_profile  app_with_profiles
@@ -19,15 +19,15 @@ CLEAN_EXTRA = \
   $(MVN_DIRS:%=issues-%.exp.test)
 
 include $(TESTS_DIR)/java.make
-include $(TESTS_DIR)/base.make
+include $(TESTS_DIR)/infer.make
 
 infer-out/report.json:
-	$(MKDIR_P) $(@D)
-	touch $@
+	$(QUIET)$(MKDIR_P) $(@D)
+	$(QUIET)touch $@
 
 infer-out-%/report.json: $(JAVA_DEPS) $(SOURCES)
-	cd ../codetoanalyze/mvn/$* && \
-	$(call silent_on_success,\
+	$(QUIET)cd ../codetoanalyze/mvn/$* && \
+	$(call silent_on_success,Testing mvn Java integration: $*,\
 	  $(INFER_BIN) -a $(ANALYZER) --results-dir $(CURDIR)/$(@D) \
 	    --project-root $(CURDIR)/$(TESTS_DIR) -- \
 	    $(MVN) clean compile)
@@ -39,17 +39,14 @@ infer-out-simple_app/report.json: infer-out-app_with_infer_profile/report.json
 infer-out-app_with_infer_profile/report.json: infer-out-app_with_profiles/report.json
 
 issues-%.exp.test: infer-out-%/report.json
-	$(INFERPRINT_BIN) -q -a $(ANALYZER) $(INFERPRINT_OPTIONS) $@ --from-json-report $<
+	$(QUIET)$(INFER_BIN) report -q -a $(ANALYZER) $(INFERPRINT_OPTIONS) $@ \
+	  -o $(<D) --from-json-report $<
 
 issues.exp.test: $(foreach mvndir,$(MVN_DIRS),issues-$(mvndir).exp.test)
 #	erase the contents of the file
-	: > $@
+	$(QUIET): > $@
 #	remember the file name so it's easier to know which bug is from where
-	for mvndir in $(MVN_DIRS); do \
+	$(QUIET)for mvndir in $(MVN_DIRS); do \
 	  echo "-- $$mvndir" >> $@; \
 	  cat issues-$$mvndir.exp.test >> $@; \
 	done
-
-prout:
-	@echo "prout: $(MVN_DIRS)"
-	@echo "clean extra: $(CLEAN_EXTRA)"

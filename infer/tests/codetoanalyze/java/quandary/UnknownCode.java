@@ -73,19 +73,19 @@ public abstract class UnknownCode {
     propagateFootprint((String) InferTaint.inferSecretSource());
   }
 
-  static void FN_propagateViaInterfaceCodeBad(Interface i) {
+  static void propagateViaInterfaceCodeBad(Interface i) {
     Object source = InferTaint.inferSecretSource();
     Object launderedSource = i.interfaceMethod(source);
     InferTaint.inferSensitiveSink(launderedSource);
   }
 
-  void FN_propagateViaUnknownNativeCodeBad() {
+  void propagateViaUnknownNativeCodeBad() {
     Object source = InferTaint.inferSecretSource();
     Object launderedSource = nativeMethod(source);
     InferTaint.inferSensitiveSink(launderedSource);
   }
 
-  static void FN_propagateViaUnknownAbstractCodeBad() {
+  static void propagateViaUnknownAbstractCodeBad() {
     Object source = InferTaint.inferSecretSource();
     Object launderedSource = nativeMethod(source);
     InferTaint.inferSensitiveSink(launderedSource);

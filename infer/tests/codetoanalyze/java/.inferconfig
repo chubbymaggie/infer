@@ -1,4 +1,5 @@
 {
+  "force-delete-results-dir": true,
   "never-returning-null": [
     {
       "language": "Java",
@@ -10,10 +11,10 @@
       "method": "get"
     }
   ],
-  "infer-blacklist-files-containing": [
+  "checkers-blacklist-files-containing": [
     "@generated"
   ],
-  "enable-checks": [
+  "enable-issue-type": [
       "GLOBAL_VARIABLE_INITIALIZED_WITH_FUNCTION_OR_METHOD_CALL"
     ],
   "skip-translation": [

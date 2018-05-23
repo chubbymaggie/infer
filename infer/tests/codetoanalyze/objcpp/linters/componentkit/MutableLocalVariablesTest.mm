@@ -56,6 +56,7 @@
   // Objc types
   NSString* a = @"lol"; // error
   NSString* const b = @"lol"; // no error
+  static NSString* st = @"lol"; // no error
   const NSString* c = @"lol"; // error
   const NSString* const d = @"lol"; // no error
 
@@ -125,4 +126,11 @@ class BarClass {
 
   return nil;
 }
+
+- (void)no_mutable_local_variable_in_self_aliases {
+  __weak auto weakSelf = self; // no error
+  __strong auto strongSelf = self; // no error
+  auto comp = [BarComponent new]; // error
+}
+
 @end

@@ -22,7 +22,6 @@ import sys
 
 import inferlib
 from inferlib import analyze, config, utils
-from inferlib.capture import make
 
 CAPTURE_PACKAGE = 'capture'
 
@@ -37,7 +36,6 @@ MODULE_TO_COMMAND = {
     'ant': ['ant'],
     'buck': ['buck'],
     'gradle': ['gradle', 'gradlew'],
-    'make': make.SUPPORTED_COMMANDS,
     'xcodebuild': ['xcodebuild'],
     'ndk-build': ['ndk-build'],
 }
@@ -174,7 +172,7 @@ def main():
         logging.info('Capture phase was successful')
     elif capture_module_name is not None:
         # There was a command, but it's not supported
-        utils.stdout('Command "{cmd}" not recognised'
+        utils.stderr('Command "{cmd}" not recognised'
                      .format(cmd='' if capture_module_name is None
                              else capture_module_name))
         global_argparser.print_help()

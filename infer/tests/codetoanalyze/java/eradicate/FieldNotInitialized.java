@@ -13,13 +13,14 @@ package codetoanalyze.java.eradicate;
 import android.support.annotation.NonNull;
 import android.widget.EditText;
 
-import butterknife.Bind;
-
 import com.facebook.infer.annotation.SuppressViewNullability;
 
 import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
 import javax.inject.Inject;
+
+// for butterknife
+@interface Bind {}
 
 public class FieldNotInitialized {
 
@@ -33,7 +34,7 @@ public class FieldNotInitialized {
 
   @NonNull String e;
 
-  @Bind(42) EditText f; // Means: assume it will be initialized, and ignore null assignment
+  @Bind EditText f; // Means: assume it will be initialized, and ignore null assignment
 
   @SuppressViewNullability EditText g;
 
@@ -135,6 +136,36 @@ public class FieldNotInitialized {
     public InitIfNull3() {
       if (o == null)
         o = getNotNull();
+    }
+  }
+
+  class InitCircular {
+    String s;
+
+    InitCircular() {
+      String tmp = s;
+      s = tmp; // s is not initialized: circular initialization
+    }
+  }
+
+  class InitWithOtherClass {
+    class OtherClass {
+      String s = "";
+    }
+
+    String s;
+
+    InitWithOtherClass(OtherClass x) {
+      s = x.s;
+    }
+  }
+
+  class InitWithThisClass {
+
+    String s;
+
+    InitWithThisClass(InitWithThisClass x) {
+      s = x.s;
     }
   }
 

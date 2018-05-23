@@ -111,4 +111,48 @@ public class DynamicDispatch {
     dynamicDispatchWrapperBar(o).toString();
   }
 
+  static class WithField {
+
+    Supertype mField;
+
+    WithField(Supertype t) {
+      mField = t;
+    }
+
+    static void dispatchOnFieldGood() {
+      Supertype subtype = new Subtype();
+      WithField object = new WithField(subtype);
+      object.mField.bar().toString();
+    }
+
+    static void dispatchOnFieldBad() {
+      Supertype subtype = new Subtype();
+      WithField object = new WithField(subtype);
+      object.mField.foo().toString();
+    }
+
+  }
+
+  private Object callFoo(Supertype o) {
+    return o.foo();
+  }
+
+  void dynamicResolutionWithPrivateMethodBad() {
+    Supertype subtype = new Subtype();
+    callFoo(subtype).toString();
+  }
+
+  Object variadicMethod(Supertype... args) {
+    if (args.length == 0) {
+      return null;
+    } else {
+      return args[0].foo();
+    }
+  }
+
+  void dynamicResolutionWithVariadicMethodBad() {
+    Supertype subtype = new Subtype();
+    variadicMethod(subtype, null, null).toString();
+  }
+
 }

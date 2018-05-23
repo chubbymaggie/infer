@@ -15,6 +15,7 @@ import java.net.URL;
 import java.io.BufferedReader;
 import java.io.FileReader;
 import java.io.IOException;
+import java.util.stream.Stream;
 
 import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
@@ -146,4 +147,20 @@ public class ReturnNotNullable {
         return x.f1; // can be null
     }
   }
+
+  Stream<Object> methodUsesLambda(Stream<Object> stream) {
+    return stream.map(x -> null); // Intentionaly not reporting here
+  }
+
+  Object $generatedReturnsNullOk() {
+    return null;
+  }
+
+  int field;
+
+  int returnsZero() {
+    field = 0;
+    return field;
+  }
+
 }

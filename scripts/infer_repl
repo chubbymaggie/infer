@@ -1,25 +1,26 @@
 #!/bin/bash
 
+## Wrapper around infertop. To build infertop, run `make toplevel`.
+
 SCRIPT_DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
 
-# _build/infer is first so that it takes precedence. This way if someone explicitly builds the
-# toplevel (`make toplevel`) they get the expected version of infer. The _build/test toplevel is
-# built during `make test` which is probably run less often, hence why it doesn't take
-# precedence. Of course this cannot be perfect so caution is advised.
-TOPLEVEL_INCLUDES="-I $SCRIPT_DIR/../infer/_build/infer -I $SCRIPT_DIR/../infer/_build/test"
+# where to find toplevel.bc, can be overridden
+TOPLEVEL_DIR=${TOPLEVEL_DIR:-"$SCRIPT_DIR"/../infer/src/_build/default}
+INCLUDE_FLAGS=$(find "$TOPLEVEL_DIR" -type d -name '*.objs' -exec printf -- '-I {}\n' \;)
 
-# to build new toplevel, run `make toplevel`
-# -init option is used only in interactive mode
-# in batch mode, scripts need to import toplevel_init themselves
+# The -init option is effective only in interactive mode.
+# In batch mode, scripts need to import toplevel_init themselves.
 # It can be done by adding #use "toplevel_init";; to the beginning
 # of a script.
 # NOTE: $SCRIPT_DIR is added search path for batch scripts
 #       so they can be located anywhere and still find toplevel_init
 #       file. In interactive mode $SCRIPT_DIR isn't needed
 
-# by default utop is used, pass `INFER_REPL_BINARY` to change the toplevel
-# binary (to `ocaml` for example)
-if [ -z "$INFER_REPL_BINARY" ]; then
-  INFER_REPL_BINARY="utop"
-fi
-$INFER_REPL_BINARY -init $SCRIPT_DIR/toplevel_init $TOPLEVEL_INCLUDES -I $SCRIPT_DIR $@
+set -x
+# infertop expects to be run from where jbuild is located
+cd "$SCRIPT_DIR"/../infer
+"$TOPLEVEL_DIR"/infertop.bc \
+  -init "$SCRIPT_DIR"/toplevel_init \
+  $INCLUDE_FLAGS \
+  -I "$SCRIPT_DIR" \
+  "$@"

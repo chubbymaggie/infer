@@ -7,31 +7,29 @@
 
 TESTS_DIR = ../../..
 include $(TESTS_DIR)/java.make
-
-# see base.make
-TEST_REL_DIR = $(patsubst $(abspath $(TESTS_DIR))/%,%,$(abspath $(CURDIR)))
+include $(TESTS_DIR)/base.make
 
 ANALYZER = crashcontext
 
 SOURCES = $(wildcard *.java)
 OBJECTS = $(patsubst %.java,%.class,$(SOURCES))
-EXP_TESTs = $(sort $(patsubst %.java,%.exp.test.noreplace,$(SOURCES)))
+EXP_TESTs = $(sort $(patsubst %.java,issues-%.exp.test,$(SOURCES)))
 INFER_OUTs = $(patsubst %.java,infer-out-%,$(SOURCES))
 
 $(OBJECTS): $(SOURCES)
-	javac -cp $(CLASSPATH) $(SOURCES)
+	$(JAVAC) -cp $(CLASSPATH) $(SOURCES)
 
 # analyze a single source file and generate the test results for it
-%.exp.test.noreplace: $(JAVA_DEPS) %.stacktrace.json %.java
-	$(call silent_on_success,\
+issues-%.exp.test: $(JAVA_DEPS) %.stacktrace.json %.java
+	$(QUIET)$(call silent_on_success,Testing crashcontext: $*,\
 	  $(INFER_BIN) -a $(ANALYZER) -o infer-out-$* --stacktrace $*.stacktrace.json \
-	  -- javac -cp $(CLASSPATH) $*.java)
+	  -- $(JAVAC) -cp $(CLASSPATH) $*.java)
 #	add a newline at the end of the json when creating the exp.test
-	$(COPY) infer-out-$*/crashcontext/crashcontext.json $@ && echo >> $@
+	$(QUIET)$(COPY) infer-out-$*/crashcontext/crashcontext.json $@ && echo >> $@
 
 # combine the test results for all the source files
 issues.exp.test: $(EXP_TESTs)
-	cat $(EXP_TESTs) > issues.exp.test
+	$(QUIET)cat $^ > $@
 
 default: compile
 
@@ -46,8 +44,12 @@ print: issues.exp.test
 
 .PHONY: test
 test: issues.exp.test
-	@cd $(TESTS_DIR) && \
-	diff -u $(TEST_REL_DIR)/issues.exp $(TEST_REL_DIR)/issues.exp.test
+	$(QUIET)cd $(TESTS_DIR) && \
+	$(call check_no_diff,$(TEST_REL_DIR)/issues.exp,$(TEST_REL_DIR)/issues.exp.test)
+
+.PHONY: replace
+replace: issues.exp.test
+	cp $< issues.exp
 
 .PHONY: clean
 clean:

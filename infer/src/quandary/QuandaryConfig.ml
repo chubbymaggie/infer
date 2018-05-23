@@ -9,37 +9,71 @@
 
 open! IStd
 
-module F = Format
-
 (** utilities for importing JSON specifications of sources/sinks into Quandary *)
 
 module Source = struct
-  type t = { procedure : Str.regexp; kind : string; }
+  type t = {procedure: string; kind: string; index: string}
 
   let of_json = function
     | `List sources ->
         let parse_source json =
-          let open Yojson.Basic.Util in
-          let procedure = json |> member "procedure" |> to_string |> Str.regexp in
-          let kind = json |> member "kind" |> to_string in
-          { procedure; kind; } in
-        IList.map parse_source sources
+          let open Yojson.Basic in
+          let procedure = Util.member "procedure" json |> Util.to_string in
+          let kind = Util.member "kind" json |> Util.to_string in
+          let index =
+            Util.member "index" json |> Util.to_string_option |> Option.value ~default:"return"
+          in
+          {procedure; kind; index}
+        in
+        List.map ~f:parse_source sources
     | _ ->
         []
 end
 
 module Sink = struct
-  type t = { procedure : Str.regexp; kind : string; index : string}
+  type t = {procedure: string; kind: string; index: string}
 
   let of_json = function
     | `List sinks ->
         let parse_sink json =
-          let open Yojson.Basic.Util in
-          let procedure = json |> member "procedure" |> to_string |> Str.regexp in
-          let kind = json |> member "kind" |> to_string in
-          let index = json |> member "index" |> to_string in
-          { procedure; kind; index; } in
-        IList.map parse_sink sinks
+          let open Yojson.Basic in
+          let procedure = Util.member "procedure" json |> Util.to_string in
+          let kind = Util.member "kind" json |> Util.to_string in
+          let index =
+            Util.member "index" json |> Util.to_string_option |> Option.value ~default:"all"
+          in
+          {procedure; kind; index}
+        in
+        List.map ~f:parse_sink sinks
+    | _ ->
+        []
+end
+
+module Sanitizer = struct
+  type t = {procedure: string; kind: string}
+
+  let of_json = function
+    | `List sinks ->
+        let parse_sanitizer json =
+          let open Yojson.Basic in
+          let procedure = Util.member "procedure" json |> Util.to_string in
+          let kind =
+            Util.member "kind" json |> Util.to_string_option |> Option.value ~default:"All"
+          in
+          {procedure; kind}
+        in
+        List.map ~f:parse_sanitizer sinks
+    | _ ->
+        []
+end
+
+module Endpoint = struct
+  type t = string
+
+  let of_json = function
+    | `List endpoints ->
+        let parse_endpoint = Yojson.Basic.Util.to_string in
+        List.map ~f:parse_endpoint endpoints
     | _ ->
         []
 end

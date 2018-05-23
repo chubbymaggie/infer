@@ -67,4 +67,123 @@ public class ExternalSpecs {
     loggingSink2(activity.getIntent(), activity.getIntent());
   }
 
+  static Object sanitizer(Object o) {
+    return o;
+  }
+
+  void viaSanitizerOk() {
+    Object source = InferTaint.inferSecretSource();
+    Object sanitized = sanitizer(source);
+    InferTaint.inferSensitiveSink(sanitized);
+  }
+
+  void sanitizeFootprint(Object o) {
+    Object sanitized = sanitizer(o);
+    InferTaint.inferSensitiveSink(sanitized);
+  }
+
+  void callSanitizeFootprintOk() {
+    sanitizeFootprint(InferTaint.inferSecretSource());
+  }
+
+  Object returnSanitizedSource() {
+    Object source = InferTaint.inferSecretSource();
+    return sanitizer(source);
+  }
+
+  void callSinkOnSanitizedSourceOk() {
+    InferTaint.inferSensitiveSink(returnSanitizedSource());
+  }
+
+  Object missedSanitizerBad() {
+    Object source = InferTaint.inferSecretSource();
+    Object sanitized = sanitizer(source);
+    InferTaint.inferSensitiveSink(source);
+    return sanitized;
+  }
+
+  void FN_sanitizeOneBranchBad(boolean b) {
+    Object source = InferTaint.inferSecretSource();
+    Object o;
+    if (b) {
+      o = sanitizer(source);
+    } else {
+      o = source;
+    }
+    InferTaint.inferSensitiveSink(o);
+  }
+
+  Object sanitizeOneBranchInCallee(Object o, boolean b) {
+    if (b) {
+      return sanitizer(o);
+    } else {
+      return o;
+    }
+  }
+
+  void FN_sanitizerWeakUpdateBad(boolean b) {
+    Object source = InferTaint.inferSecretSource();
+    Object o = sanitizeOneBranchInCallee(source, b);
+    InferTaint.inferSensitiveSink(o);
+  }
+
+  // if theres' a procedure with the same name defined in .inferconfig as a sink on parameter 1,
+  // we shouldn't crash
+  public static void loggingSink1() {}
+
+  // we shouldn't fail when calling this either
+  public static void loggingSink1(Object notASink) { }
+
+  void callLoggingSink1sOk(Object o) {
+    loggingSink1();
+    loggingSink1(o);
+  }
+
+  public static Object sinkThatPropagates(Object o) {
+    return o;
+  }
+
+  void callSinkThatPropagatesBad() {
+    Object source = InferTaint.inferSecretSource();
+    Object sourceAgain = sinkThatPropagates(source); // should report
+    loggingSink1(null, sourceAgain); // should report here too
+  }
+
+}
+
+interface InterfaceSpec {
+
+  // marked as source in .inferconfig
+  public Object source();
+
+  // marked as sink in .inferconfig
+  public void sink(Object o);
+}
+
+class InterfaceSpecImpl implements InterfaceSpec {
+
+  @Override
+  public Object source() {
+    return null;
+  }
+
+  @Override
+  public void sink(Object o) {}
+
+  public void externalSpecBad() {
+    sink(source());
+  }
+
+}
+
+class ConstructorSink {
+
+  // specified as a source in .inferconfig
+  public ConstructorSink(Object o) {
+  }
+
+  public static ConstructorSink constructorSinkBad() {
+    Object source = InferTaint.inferSecretSource();
+    return new ConstructorSink(source);
+  }
 }

@@ -11,16 +11,10 @@ from __future__ import print_function
 from __future__ import unicode_literals
 
 import argparse
-import csv
 import multiprocessing
-import sys
 
 
 from . import config, utils
-
-# Increase the limit of the CSV parser to sys.maxlimit
-csv.field_size_limit(sys.maxsize)
-
 
 base_parser = argparse.ArgumentParser(add_help=False)
 base_group = base_parser.add_argument_group('global arguments')
@@ -30,6 +24,10 @@ base_group.add_argument('-o', '--out', metavar='<directory>',
                         type=utils.decode,
                         action=utils.AbsolutePathAction,
                         help='Set the Infer results directory')
+base_group.add_argument('--continue', dest="continue_capture",
+                        action='store_true',
+                        help='''Continue the capture, do not delete previous
+                        results''')
 base_group.add_argument('-r', '--reactive', action='store_true',
                         help='''Analyze in reactive propagation mode
                         starting from changed files.''')
@@ -46,14 +44,11 @@ base_group.add_argument('-nf', '--no-filtering', action='store_true',
                         help='''Also show the results from the experimental
                         checks. Warning: some checks may contain many false
                         alarms''')
-
-base_group.add_argument('--android-harness', action='store_true',
-                        help='''[experimental] Create harness to detect bugs
-                        involving the Android lifecycle''')
-
 base_group.add_argument('--pmd-xml',
                         action='store_true',
                         help='''Output issues in (PMD) XML format.''')
+base_group.add_argument('--quiet', action='store_true',
+                        help='Silence console output.')
 
 
 infer_parser = argparse.ArgumentParser(parents=[base_parser])
@@ -70,9 +65,6 @@ infer_group.add_argument('-l', '--load-average', metavar='<float>', type=float,
                          help='Specifies that no new jobs (commands) should '
                          'be started if there are others jobs running and the '
                          'load average is at least <float>.')
-
-infer_group.add_argument('--buck', action='store_true', dest='buck',
-                         help='To use when run with buck')
 
 infer_group.add_argument('--java-jar-compiler',
                          metavar='<file>')

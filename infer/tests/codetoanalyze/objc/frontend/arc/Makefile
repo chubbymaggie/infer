@@ -10,7 +10,7 @@ TESTS_DIR = ../../../..
 IPHONESIMULATOR_ISYSROOT_SUFFIX = \
   /Platforms/iPhoneSimulator.platform/Developer/SDKs/iPhoneSimulator.sdk
 
-XCODEROOT = $(shell xcode-select -p)
+XCODEROOT = $(shell $(XCODE_SELECT) -p)
 
 CLANG_OPTIONS = -x objective-c \
   -isysroot $(XCODEROOT)$(IPHONESIMULATOR_ISYSROOT_SUFFIX) \
@@ -22,10 +22,11 @@ SOURCES = \
   ../types/attributes.m \
   ../types/void_call.m \
   ../vardecl/initlist.m \
-  ../shared/assertions/NSAssert_example.m \
   ../shared/block/BlockVar.m \
+	../shared/block/Blocks_as_parameters.m \
   ../shared/memory_leaks_benchmark/ArcExample.m \
   ../shared/memory_leaks_benchmark/arc_methods.m \
+	../shared/npe/Available_expr.m \
   ../shared/npe/Nonnull_attribute_example.m \
 
 include $(TESTS_DIR)/clang-frontend.make

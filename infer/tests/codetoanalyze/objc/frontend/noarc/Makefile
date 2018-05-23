@@ -10,7 +10,7 @@ TESTS_DIR = ../../../..
 IPHONESIMULATOR_ISYSROOT_SUFFIX = \
   /Platforms/iPhoneSimulator.platform/Developer/SDKs/iPhoneSimulator.sdk
 
-XCODEROOT = $(shell xcode-select -p)
+XCODEROOT = $(shell $(XCODE_SELECT) -p)
 
 CLANG_OPTIONS = -x objective-c \
   -isysroot $(XCODEROOT)$(IPHONESIMULATOR_ISYSROOT_SUFFIX) \
@@ -27,6 +27,7 @@ SOURCES = \
   ../conditional_operation/ConditionalOperation.m \
   ../exceptions/ExceptionExample.m \
   ../fast_enumeration/Fast_enumeration.m \
+	../internal_forward_class/ForwardClassInMethod.m \
   ../property/PropertyCustomAccessor.m \
   ../property/PropertyImplSetter.m \
   ../property/Property_getter.m \
@@ -50,7 +51,6 @@ SOURCES = \
   ../shared/memory_leaks_benchmark/AutoreleaseExample.m \
   ../shared/memory_leaks_benchmark/MemoryLeakExample.m \
   ../shared/memory_leaks_benchmark/RetainReleaseExample.m \
-  ../shared/memory_leaks_benchmark/RetainReleaseExample2.m \
   ../shared/memory_leaks_benchmark/TollBridgeExample.m \
   ../shared/npe/npe_malloc.m \
   ../shared/property/GetterExample.m \
@@ -66,5 +66,7 @@ SOURCES = \
   ../vardecl/aclass.m \
   ../vardecl/aclass_2.m \
   ../vardecl/last_af.m \
+	../shared/annotations/nullable_annotations.m \
+	../shared/annotations/nonnull_annotations.m \
 
 include $(TESTS_DIR)/clang-frontend.make

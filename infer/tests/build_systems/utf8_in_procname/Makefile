@@ -7,7 +7,7 @@
 
 TESTS_DIR = ../..
 
-ANALYZER = infer
+ANALYZER = checkers
 
 CLANG_OPTIONS = -c
 INFER_OPTIONS = --project-root ../codetoanalyze
@@ -17,13 +17,20 @@ SOURCES = ../codetoanalyze/make/utf8_in_function_names.c
 
 include $(TESTS_DIR)/clang.make
 
-infer-out/report.json: $(CLANG_DEPS) $(SOURCES) $(HEADERS)
+infer-out/report.json: $(CLANG_DEPS) $(SOURCES) $(HEADERS) $(MAKEFILE_LIST)
 #	set non-utf8-supporting locale
-	LC_ALL=C; \
-	$(call silent_on_success,\
-	  $(INFER_BIN) --check-duplicate-symbols $(INFER_OPTIONS) -a $(ANALYZER) -- clang $(CLANG_OPTIONS) $(SOURCES) 2>duplicates.txt)
+	$(QUIET)LC_ALL=C; \
+	$(call silent_on_success,Testing Infer is immune to UTF-8 in procnames,\
+	  $(INFER_BIN) --dump-duplicate-symbols $(INFER_OPTIONS) -a $(ANALYZER) -- clang $(CLANG_OPTIONS) $(SOURCES))
+	$(QUIET)$(call check_no_duplicates,infer-out/duplicates.txt)
+#	make sure inferTraceBugs is immune to UTF-8
+	$(QUIET)$(call silent_on_success,Testing inferTraceBugs is immune to UTF-8 in procnames,\
+	$(INFER_BIN) explore --select 0)
+	$(QUIET)$(call silent_on_success,Testing inferTraceBugs --html is immune to UTF-8 in procnames,\
+	$(INFER_BIN) explore --html)
+	$(QUIET)[ -f infer-out/report.html/index.html ]
 #	run again to check that infer manages to delete the results directory
-	LC_ALL=C; \
-	$(call silent_on_success,\
-	  $(INFER_BIN) --check-duplicate-symbols $(INFER_OPTIONS) -a $(ANALYZER) -- clang $(CLANG_OPTIONS) $(SOURCES) 2>duplicates.txt)
-	grep "DUPLICATE_SYMBOLS" duplicates.txt; test $$? -ne 0
+	$(QUIET)LC_ALL=C; \
+	$(call silent_on_success,Testing Infer rerun is immune to UTF-8 in procnames,\
+	  $(INFER_BIN) --dump-duplicate-symbols $(INFER_OPTIONS) -a $(ANALYZER) -- clang $(CLANG_OPTIONS) $(SOURCES))
+	$(QUIET)$(call check_no_duplicates,infer-out/duplicates.txt)

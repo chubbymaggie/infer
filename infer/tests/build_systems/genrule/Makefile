@@ -9,41 +9,39 @@ TESTS_DIR = ../..
 ROOT_DIR = $(TESTS_DIR)/../..
 
 ANALYZER = infer
-
 BUCK_TARGET = //infer/tests/build_systems/genrule/module2:module2
-SOURCES = $(addprefix $(ROOT_DIR), $(shell buck audit input $(BUCK_TARGET)))
-TARGET_OUTPUT = $(word 2, $(shell buck targets --show-output $(BUCK_TARGET)))
-OBJECTS = $(ROOT_DIR)/$(TARGET_OUTPUT)
-
 INFER_TARGET = $(BUCK_TARGET)_infer
-GENRULE_OUTPUT = $(word 2, $(shell GENERATE_INFER_GENRULES=1 buck targets --show-output $(INFER_TARGET)))
-JSON_REPORT = $(ROOT_DIR)/$(GENRULE_OUTPUT)/report.json
-
-INFER_OPTIONS = --project-root $(ROOT_DIR)
+SOURCES = $(wildcard $(TESTS_DIR)/codetoanalyze/java/infer/*.java)
+OBJECTS = $(ROOT_DIR)/buck-out/genruletest/gen/infer/tests/build_systems/genrule/module2/lib__module2_compile__output/module2_compile.jar
+JSON_REPORT = $(ROOT_DIR)/buck-out/gen/infer/tests/build_systems/genrule/module2/module2_infer/infer_out/report.json
 INFERPRINT_OPTIONS = --project-root $(ROOT_DIR) --issues-tests
-CLEAN_EXTRA = $(ROOT_DIR)/buck-out/genruletest
+
+# fake infer-out because we only copy the results.json from buck-out.
+INFER_OUT = .
 
 include $(TESTS_DIR)/java.make
-include $(TESTS_DIR)/base.make
+include $(TESTS_DIR)/infer.make
 
 $(OBJECTS): $(JAVA_SOURCE_FILES)
-	cd $(ROOT_DIR) && \
-	$(call silent_on_success,\
-	NO_BUCKD=1 buck build --no-cache $(BUCK_TARGET))
+	$(QUIET)cd $(ROOT_DIR) && \
+	$(call silent_on_success,Compiling Buck genrule for Java sources,\
+	$(BUCK) build --no-cache $(BUCK_TARGET))
 
 .PHONY: genrule
 genrule: $(JSON_REPORT)
 
 
-$(JSON_REPORT): $(JAVA_DEPS) $(JAVA_SOURCE_FILES)
-	cd $(ROOT_DIR) && \
-    $(REMOVE_DIR) buck-out && \
-	$(call silent_on_success,\
-	INFER_BIN="$(INFER_BIN)" NO_BUCKD=1 GENERATE_INFER_GENRULES=1 \
-	buck build --no-cache $(INFER_TARGET))
-	touch $@
+$(JSON_REPORT): $(JAVA_DEPS) $(JAVA_SOURCE_FILES) $(MAKEFILE_LIST)
+	$(QUIET)cd $(ROOT_DIR) && \
+	$(REMOVE_DIR) buck-out && \
+	$(call silent_on_success,Testing Buck genrule for Java integration,\
+	INFER_BIN="$(INFER_BIN)" PROJECT_ROOT="$(PWD)" $(BUCK) build --no-cache $(INFER_TARGET))
+	$(QUIET)touch $@
 
-infer-out/report.json: $(JSON_REPORT)
-	$(MKDIR_P) infer-out
+report.json: $(JSON_REPORT) $(MAKEFILE_LIST)
 #	the report contains absolute paths
-	@sed -e 's#$(abspath $(TESTS_DIR))/##g' $< > $@
+	$(QUIET)sed -e 's#$(abspath $(TESTS_DIR))/##g' $< > $@
+
+issues.exp.test$(TEST_SUFFIX): report.json $(INFER_BIN)
+	$(QUIET)$(INFER_BIN) report -q -a $(ANALYZER) \
+	   $(INFERPRINT_OPTIONS) $@ --from-json-report $<

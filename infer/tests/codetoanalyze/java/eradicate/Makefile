@@ -7,8 +7,13 @@
 
 TESTS_DIR = ../../..
 
-ANALYZER = eradicate
-INFER_OPTIONS = --eradicate-return-over-annotated --no-filtering --debug-exceptions
+ANALYZER = checkers
+INFER_OPTIONS = \
+  --eradicate-only \
+	--eradicate-return-over-annotated \
+	--eradicate-optional-present \
+	--eradicate-condition-redundant \
+	--debug-exceptions
 INFERPRINT_OPTIONS = --issues-tests
 SOURCES = $(wildcard *.java)
 
